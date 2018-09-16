@@ -18,11 +18,11 @@ class ErrorController  extends Base {
 		//5. render by Yaf
 	}
 	private function _pageNotFound(){
-		echo $this->jsonMsg("page not found",404);
+		echo $this->jsonMsg("page not found v1",404);
 		exit;
 	}
 	private function _unknownError(){
-		echo jsonMsg("system error",500);
+		echo $this->jsonMsg("system error", 500);
 		exit;
 	}
 

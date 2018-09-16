@@ -2,7 +2,7 @@
 class ErrorController  extends Base {
 	public function init()
 	{
-
+		parent::init();
 	}
 
 	public function errorAction($exception) {
@@ -18,11 +18,11 @@ class ErrorController  extends Base {
 		//5. render by Yaf
 	}
 	private function _pageNotFound(){
-		echo $this->jsonMsg("page not found",404);
+		echo $this->helper->resRet("page not found",404);
 		exit;
 	}
 	private function _unknownError(){
-		echo jsonMsg("system error",500);
+		echo $this->helper->resRet("system error",500);
 		exit;
 	}
 

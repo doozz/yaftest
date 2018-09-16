@@ -1,6 +1,6 @@
 <?php
 
-Class Helper extends Yaf_Plugin_Abstract  {
+Class Helper {
 	public function resRet($data = [], $code = 200)
 	{
 		$ret = ['code' => $code];

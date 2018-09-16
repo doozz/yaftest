@@ -6,11 +6,12 @@
  * 这些方法, 都接受一个参数:Yaf_Dispatcher $dispatcher
  * 调用的次序, 和申明的次序相同
  */
-class Bootstrap extends Yaf_Bootstrap_Abstract{
+class Bootstrap extends \Yaf\Bootstrap_Abstract{
 	public function _initConfig() {
 		//把配置保存起来
-		$this->config = Yaf_Application::app()->getConfig();
-		Yaf_Registry::set('config', $this->config);
+		$this->config = \Yaf\Application::app()->getConfig();
+		\Yaf\Registry::set('config', $this->config);
+
 
 	}
 
@@ -21,39 +22,37 @@ class Bootstrap extends Yaf_Bootstrap_Abstract{
 //			array('Controller','Helper')
 //		);
 //	}
-	public function _initLoader($dispatcher) {
-		require APP_PATH."../library/Loader.php";
-		spl_autoload_register('loader');
-	}
-	public function _initPlugin(Yaf_Dispatcher $dispatcher) {
+	public function _initPlugin(\Yaf\Dispatcher $dispatcher) {
 		$login = new Login();
 		$dispatcher->registerPlugin($login);
 	}
+
+	// public function _initRules(\Yaf\Dispatcher $dispatcher) {
+	// 	$Rules = new Rules();
+	// 	$dispatcher->registerPlugin($Rules);
+	// }
+
+	public function _initLoader($dispatcher) {
+		$dispatcher->getInstance()->disableView();
+		require APP_PATH."../library/Loader.php";
+		spl_autoload_register('loader');
+	}
+
+
 	//载入mysql
 	public function _initMysql()
 	{
-		Yaf_Registry::set('db', PdoMysql::getInstance($this->config["db"]));
+		\Yaf\Registry::set('db', PdoMysql::getInstance($this->config["db"]));
 	}
 	//载入redis
 	public function _initRedis()
 	{
-		Yaf_Registry::set('redis', RedisDb::getInstance($this->config["redis"]));
+		\Yaf\Registry::set('redis', RedisDb::getInstance($this->config["redis"]));
 	}
 
 	//载入方法库
 	public function _initLibrary()
 	{
-		Yaf_Loader::import('Function.php');
+		\Yaf\Loader::import('Function.php');
 	}
-//	public function _initPlugin(Yaf_Dispatcher $dispatcher) {
-//		//注册一个插件
-//	}
-//	public function _initRoute(Yaf_Dispatcher $dispatcher) {
-//
-//		//在这里注册自己的路由协议,默认使用简单路由
-//	}
-//
-//	public function _initView(Yaf_Dispatcher $dispatcher){
-//		//在这里注册自己的view控制器，例如smarty,firekylin
-//	}
 }

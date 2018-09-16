@@ -1,6 +1,4 @@
 <?php
-
-
 class ModelBase
 {
 
@@ -53,7 +51,7 @@ class ModelBase
 	 */
 	public function __construct()
 	{
-		$this->db = Yaf_Registry::get('db');
+		$this->db = \Yaf\Registry::get('db');
 	}
 
 	/**

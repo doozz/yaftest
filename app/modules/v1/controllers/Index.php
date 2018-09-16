@@ -1,4 +1,7 @@
 <?php
+
+use Components\Utils as utils;
+
 class IndexController extends  Base {
 	public function init()
 	{
@@ -6,14 +9,20 @@ class IndexController extends  Base {
 		$this->logic = new IndexLogic();
 	}
 	public function indexAction() {//默认Action
-		$res = $this->logic->index();
-		echo $this->jsonMsg($res);
+		$request = $this->getRequest();
+		echo "param id: <span>", $request->getParam('id'), "</span><br/>";
+		$res = $this->logic->index();	
+		echo $this->helper->resRet($res);
 		exit;
 	}
 
 	public function testAction() {
-		echo 'this is test!';
-		exit;
+		var_dump($this->getRequest()->getPost());
+		$jwt = new utils\Jwt();
+		echo $jwt->make();
+
 	}
+	
+
 }
 ?>

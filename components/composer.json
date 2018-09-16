@@ -1,0 +1,11 @@
+{
+    "require": {
+       "lcobucci/jwt" :"3.2"
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    }
+}
