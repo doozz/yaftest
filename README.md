@@ -16,8 +16,6 @@
 - conf
 --|-- application.ini  //配置文件   
 - library 
-- doc
---|--router.go
 ------|-- Helper.php
 ------|-- Base.php //controllerBase
 ------|-- ModelBase.php //mysql封装类
