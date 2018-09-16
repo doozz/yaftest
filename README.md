@@ -26,7 +26,6 @@
 - public 
 --|-- index.php  //入口文件
 - components //composer文件
---|--user_test.go
 ```
 
 #### application.ini
