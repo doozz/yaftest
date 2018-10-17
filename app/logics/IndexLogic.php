@@ -1,7 +1,9 @@
 <?php
-class IndexLogic {
+class IndexLogic  extends \core\LogicBase
+{
 	public function __construct()
 	{
+		parent::init();
 		$this->model = new IndexModel();
 	}
 	public function index() {//默认Action
@@ -10,8 +12,9 @@ class IndexLogic {
 		// 	throw new Exception("Value must be 1 or below", 500);
 		// }
 		// return true;
-		$res = $this->model->index();
-		return $res;
+		$this->di['helper']->test();
+		//$res = $this->model->index();
+		//return $res;
 	}
 
 }

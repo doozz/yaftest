@@ -1,4 +1,7 @@
 <?php
+
+namespace core;
+
 class ModelBase
 {
 
@@ -37,6 +40,7 @@ class ModelBase
 	 */
 	protected $table;
 
+
 	/**
 	 * 数据库对象
 	 *
@@ -45,13 +49,12 @@ class ModelBase
 	protected $db;
 
     protected $di;
-
 	/**
 	 * 创建模型
 	 */
-	public function __construct()
+	public function init()
 	{
-		$this->db = \Yaf\Registry::get('db');
+		$this->di = \Yaf\Registry::get('di');
 	}
 
 	/**

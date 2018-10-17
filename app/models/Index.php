@@ -1,6 +1,13 @@
 <?php
-class IndexModel extends ModelBase{
-	protected $table = 'adm_users';
+class IndexModel extends \core\ModelBase 
+{
+	public function __construct()
+	{
+		parent::init();
+		$this->db = $this->di['test'];
+		$this->table='adm_user';
+	}
+
 	/**
 	 * 用户登录判断
 	 */

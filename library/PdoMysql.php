@@ -6,7 +6,7 @@ class PdoMysql  {
 	 * @var array
 	 */
 	public static $instance = NULL;
-
+	public static $count = 1;
 	/**
 	 * 创建数据库实例
 	 *
@@ -18,7 +18,7 @@ class PdoMysql  {
 		try
 		{
 			// 数据库连接信息
-			$dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['name']};charset={$config['charset']}";
+			$dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$key};charset={$config['charset']}";
 			// 驱动选项
 			$option = array(\PDO::ATTR_ERRMODE=> \PDO::ERRMODE_EXCEPTION, // 如果出现错误抛出错误警告
 				\PDO::ATTR_ORACLE_NULLS=> \PDO::NULL_TO_STRING, // 把所有的NULL改成""

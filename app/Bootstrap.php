@@ -1,11 +1,5 @@
 <?php
-/**
- * @name Bootstrap
- * @author root
- * @desc 所有在Bootstrap类中, 以_init开头的方法, 都会被Yaf调用,
- * 这些方法, 都接受一个参数:Yaf_Dispatcher $dispatcher
- * 调用的次序, 和申明的次序相同
- */
+
 class Bootstrap extends \Yaf\Bootstrap_Abstract{
 	public function _initConfig() {
 		//把配置保存起来
@@ -15,13 +9,7 @@ class Bootstrap extends \Yaf\Bootstrap_Abstract{
 
 	}
 
-//	public function _initRegisterLocalNamespace()
-//	{
-//		$loader = Yaf_Loader::getInstance();
-//		$loader->registerLocalNamespace(
-//			array('Controller','Helper')
-//		);
-//	}
+
 	public function _initPlugin(\Yaf\Dispatcher $dispatcher) {
 		$login = new Login();
 		$dispatcher->registerPlugin($login);
@@ -31,28 +19,32 @@ class Bootstrap extends \Yaf\Bootstrap_Abstract{
 	// 	$Rules = new Rules();
 	// 	$dispatcher->registerPlugin($Rules);
 	// }
-
+	public function _initCompose(){
+		require APP_PATH . DIRECTORY_SEPARATOR .'/components/vendor/autoload.php';
+	}
 	public function _initLoader($dispatcher) {
 		$dispatcher->getInstance()->disableView();
-		require APP_PATH."../library/Loader.php";
+		require APP_PATH."/library/Loader.php";
 		spl_autoload_register('loader');
 	}
 
+	public function _initDi() {
+		
+		$container = new Illuminate\Container\Container();
+		//注册容器
+		\Yaf\Registry::set('di', $container); 
+		//导入依赖插件
+		foreach ( $this->config["db"]["name"] as $value) {
+			$container->singleton('mysql_'.$value, function (){
+				return PdoMysql::getInstance($this->config["db"],$value);
+			});
+		}
+		$container->singleton('redis', function() {
+			return RedisDb::getInstance($this->config["redis"]);
+		});
 
-	//载入mysql
-	public function _initMysql()
-	{
-		\Yaf\Registry::set('db', PdoMysql::getInstance($this->config["db"]));
-	}
-	//载入redis
-	public function _initRedis()
-	{
-		\Yaf\Registry::set('redis', RedisDb::getInstance($this->config["redis"]));
-	}
-
-	//载入方法库
-	public function _initLibrary()
-	{
-		\Yaf\Loader::import('Function.php');
+		$container->singleton('helper', function() {
+			return new Helper();
+		});
 	}
 }
