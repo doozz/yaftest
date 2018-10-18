@@ -8,7 +8,6 @@ class ControllerBase extends \Yaf\Controller_Abstract
 	
 	public function init()
 	{
-		\Yaf\Dispatcher::getInstance()->disableView();
 		$this->di = \Yaf\Registry::get('di'); 
 	}
 }

@@ -1,11 +1,14 @@
 <?php
-class ErrorController  extends Base {
+class ErrorController extends \core\ControllerBase 
+{
 	public function init()
 	{
 		parent::init();
 	}
 
-	public function errorAction($exception) {
+	public function errorAction($exception) 
+	{
+		var_dump($exception);
 		switch($exception->getCode()):
 		case 515:
 		case 516:
@@ -15,14 +18,14 @@ class ErrorController  extends Base {
 		default:
 			return $this->_unknownError();
 		endswitch;
-		//5. render by Yaf
+		
 	}
 	private function _pageNotFound(){
-		echo $this->helper->resRet("page not found",404);
+		echo $this->di['helper']->resRet("page not found",404);
 		exit;
 	}
 	private function _unknownError(){
-		echo $this->helper->resRet("system error",500);
+		echo $this->di['helper']->resRet("system error",500);
 		exit;
 	}
 

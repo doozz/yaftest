@@ -27,7 +27,6 @@ class RulesParse
     public function __construct($rule)
     {
         $this->rules = $rule;
-        //var_dump($this->rules);
     }
 
     /**
@@ -62,7 +61,6 @@ class RulesParse
             return true;
         }
 
-
         if(isset($this->rules['_method']['get']))
         {
             $methods = $this->rules['_method']['get'];
@@ -79,7 +77,6 @@ class RulesParse
 
         foreach($methods as $param)
         {
-           
             if(!isset($this->rules[$param]))
             {
                 continue;
@@ -95,7 +92,6 @@ class RulesParse
             }
           
             $paramKeys = array_keys($this->rules[$param]);
-           
             foreach($paramKeys as $key)
             {
                 $ruleValue = isset($this->rules[$param][$key]) ? $this->rules[$param][$key] : '';
@@ -106,7 +102,7 @@ class RulesParse
             }
         }
        
-        // $warnMsg = $hasValiData ? $validation->validate($datas) : array();
+        $warnMsg = $hasValiData ? $validation->validate($datas) : array();
 
         // if(count($warnMsg))
         // {
@@ -131,26 +127,26 @@ class RulesParse
     protected function _rule($key, $ruleValue, $ruleMsg, $param, $datas)
     {
         $errorCode = $this->_errorCode($key);
-       
+        echo $key,'/', $ruleValue, '/',$ruleMsg,'/', $param,'/',$errorCode;exit;
         switch($key)
         {
-            case 'required':    // 必填
+            case 'required':
                 if ($ruleValue) {
-                    var_dump($datas[$param]);
-                    if (!$datas[$param]) {
-                        echo 888;
-                    }        
+                    $validation->add($param, new PresenceOf(array(
+                        'message' => $ruleMsg,
+                        'code' => $errorCode
+                    )));
                 }
                 break;
 
             case 'length':  // 验证长度
-                // if(is_array($ruleValue))
-                // {
-                //     $max = $ruleValue[1];
-                //     $min = $ruleValue[0];
-                // }
-                // else
-                //     $min = $max = $ruleValue;
+                if(is_array($ruleValue))
+                {
+                    $max = $ruleValue[1];
+                    $min = $ruleValue[0];
+                }
+                else
+                    $min = $max = $ruleValue;
 
                 // $validation->add($param, new \Admin\Utils\MyValidator\StrlenValidator(array(
                 //     'max' => $max,
@@ -160,17 +156,17 @@ class RulesParse
                 // )));
                 // break;
 
-            case 'filters':
-                // if(is_array($ruleValue))
-                // {
-                //     array_walk($ruleValue, function($item, $iKey) use ($validation) {
-                //         $validation->setFilters($param, $item);
+            echo $param,$ruleValue;
+                if(is_array($ruleValue))
+                {
+                    array_walk($ruleValue, function($item, $iKey) use ($validation) {
+                        $validation->setFilters($param, $item);
 
-                //     });
-                // }
+                    });
+                }
 
-                // $validation->setFilters($param, $ruleValue);
-                // break;
+                $validation->setFilters($param, $ruleValue);
+                break;
 
             case 'regex':   // 正则
                 // $validation->add($param, new Regex(array(

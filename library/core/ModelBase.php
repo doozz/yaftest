@@ -55,6 +55,7 @@ class ModelBase
 	public function init()
 	{
 		$this->di = \Yaf\Registry::get('di');
+		$this->db = $this->di['mysql'];
 	}
 
 	/**

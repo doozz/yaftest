@@ -6,7 +6,7 @@ class PdoMysql  {
 	 * @var array
 	 */
 	public static $instance = NULL;
-	public static $count = 1;
+
 	/**
 	 * 创建数据库实例
 	 *

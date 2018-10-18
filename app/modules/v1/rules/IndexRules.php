@@ -2,7 +2,7 @@
 
 $rules['index'] = array(
         '_method' => array(
-             'get' => array('id','ame'),
+             'get' => array('id','name'),
         ),
         'id' => array(
             'required' => 1,
@@ -23,13 +23,13 @@ $rules['test'] = array(
     'nick' => array(
         'required' => 1,
         'length' => [1, 20],
-        'msg' => '宝贝昵称输入错误'
+        'msg' => '参数错误1'
     ),
 
     'id' => array(
         'required' => 1,
         'filters' => 'int',
-        'msg' => '参数错误'
+        'msg' => '参数错误2'
     ),   
 );
 
