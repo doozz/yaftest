@@ -15,6 +15,11 @@ Class Rules  extends \Yaf\Plugin_Abstract {
         }
      
         $utils = new utils\RulesParse($rules[$request->getActionName()]);
-        $utils->parse($request);
+        $result = $utils->parseMethod($request);
+  
+        if (!empty($result)) {
+        	$this->di = \Yaf\Registry::get('di'); 
+        	$this->di['helper']->resRet($result);
+        }
 	}	
 }

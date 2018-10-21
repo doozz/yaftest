@@ -14,7 +14,6 @@ class RulesParse
     public $warnMsgMsg = false;  // 返回错误集，包含msg
 
     public $_sanReq = array();
-    protected $sanitize = array();
 
     /**
      * @name __construct
@@ -30,61 +29,38 @@ class RulesParse
     }
 
     /**
-     * @brief parse 进行规则解析
-     *
-     * @Returns
-     */
-    public function parse($request)
-    {
-        // 判断解析对应请求方式的参数规则
-        if(isset($this->rules['_method']) && !$this->parseMethod($request))
-        {
-            $this->methodErr = true;
-            return false;
-        }
-
-        return true;
-    }
-
-
-    /**
      * @brief parseMethod 解析action里面的方法
      *
      * @Returns
      */
-    protected function parseMethod($request)
+    public function parseMethod($request)
     {
         $methods = array();
         $datas = array();
 
-        if (!isset($this->rules['_method']['post']) && !isset($this->rules['_method']['get']) && !isset($this->rules['_method']['cookie'])) {
-            return true;
+        if (strcasecmp($request->getMethod(), $this->rules['_method']) !== 0)
+        {
+            return 'ERROR METHOD';   
         }
 
-        if(isset($this->rules['_method']['get']))
+
+        if($this->rules['_method'] == 'get')
         {
-            $methods = $this->rules['_method']['get'];
             $datas = $request->getParams();
         }
         
-        if(isset($this->rules['_method']['post']))
+        if($this->rules['_method'] == 'post')
         {
-            $methods = $this->rules['_method']['post'];
             $datas = $request->getPost();
         }
 
-        $hasValiData = false;   // 是否存在待校验数据标识
-
-        foreach($methods as $param)
+        foreach($this->rules['_params'] as $param)
         {
             if(!isset($this->rules[$param]))
             {
                 continue;
             }
-            if (empty($datas[$param]) && isset($this->rules[$param]['default']) && $this->rules[$param]['default'])
-            {
-                $datas[$param] = $this->rules[$param]['default'];
-            }
+        
             // 非必填且参数无值  无需验证
             if (!$this->rules[$param]['required'] && empty($datas[$param]))
             {
@@ -92,227 +68,200 @@ class RulesParse
             }
           
             $paramKeys = array_keys($this->rules[$param]);
+
             foreach($paramKeys as $key)
             {
                 $ruleValue = isset($this->rules[$param][$key]) ? $this->rules[$param][$key] : '';
                 $ruleMsg = isset($this->rules[$param]['msg']) ? $this->rules[$param]['msg'] : '';
                
-                $this->_rule($key, $ruleValue, $ruleMsg, $param , $datas);
+                $result = $this->_rule($key, $ruleValue, $ruleMsg, $param , $datas);
+                if (!$result) {
+                    return $ruleMsg; 
+                }
+                //数据过滤开始
+                if($key == 'filters')
+                {   
+                    if(is_array($datas[$param]))
+                    {
+                        foreach ($datas[$param] as $key => $value) {
+                            $datas[$param][$key] = $ruleValue(addslashes($value));
+                        }
+                    }else {
+                        $datas[$param] =  $ruleValue(addslashes($datas[$param]));
+                    }
+                }
                 
             }
         }
-       
-        $warnMsg = $hasValiData ? $validation->validate($datas) : array();
-
-        // if(count($warnMsg))
-        // {
-        //     $this->resFlag = false;
-        //     $this->warnMsg = $this->_warnFormat($warnMsg);
-        //     $this->warnMsgCode = $this->_warnFormat($warnMsg, 'code');
-        //     $this->warnMsgMsg = $this->_warnFormat($warnMsg, 'msg');
-        //     return false;
-        // }
-        // else
-        // {
-        //     foreach ($this->sanitize as $param => $rule)
-        //     {
-        //         $datas[$param] = $rule($datas[$param]);
-        //     }
-
-        //     $this->_sanReq = $datas;
-        //     return true;
-        // }
     }
 
     protected function _rule($key, $ruleValue, $ruleMsg, $param, $datas)
     {
-        $errorCode = $this->_errorCode($key);
-        echo $key,'/', $ruleValue, '/',$ruleMsg,'/', $param,'/',$errorCode;exit;
+        $result = true;
         switch($key)
         {
+            //是否必须
             case 'required':
                 if ($ruleValue) {
-                    $validation->add($param, new PresenceOf(array(
-                        'message' => $ruleMsg,
-                        'code' => $errorCode
-                    )));
+                    $result = isset($datas[$param]);
                 }
                 break;
-
-            case 'length':  // 验证长度
+            // 数值最大值
+            case 'max':
+                $result = $datas[$param] > $ruleValue;
+                break;
+            // 数值最小值
+            case 'min':
+                $result = $datas[$param] < $ruleValue;
+                break;
+            // 数值范围内
+            case 'between':
                 if(is_array($ruleValue))
                 {
                     $max = $ruleValue[1];
                     $min = $ruleValue[0];
                 }
                 else
-                    $min = $max = $ruleValue;
-
-                // $validation->add($param, new \Admin\Utils\MyValidator\StrlenValidator(array(
-                //     'max' => $max,
-                //     'min' => $min,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            echo $param,$ruleValue;
-                if(is_array($ruleValue))
+                    $min = $max = $$ruleValue;
+                $result = $datas[$param] <= $max and $datas[$param] >= $min;
+                break;
+            // 数值匹配
+            case 'range':
+               if(is_array($ruleValue))
                 {
-                    array_walk($ruleValue, function($item, $iKey) use ($validation) {
-                        $validation->setFilters($param, $item);
-
-                    });
+                    $range = $ruleValue;
                 }
-
-                $validation->setFilters($param, $ruleValue);
+                else
+                    $range = [$ruleValue];
+                $result = in_array($datas[$param], $range);
                 break;
-
-            case 'regex':   // 正则
-                // $validation->add($param, new Regex(array(
-                //     'pattern' => $ruleValue,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'between': // 数值区间
-                // if(is_array($ruleValue))
-                // {
-                //     $max = $ruleValue[1];
-                //     $min = $ruleValue[0];
-                // }
-                // else
-                //     $min = $max = $$ruleValue;
-
-                // $validation->add($param, new Between(array(
-                //     'minimum' => $min,
-                //     'maximum' => $max,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'range':   // 匹配数值
-                // $validation->add($param, new InclusionIn(array(
-                //     'domain' => $ruleValue,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'rangeout':    // 之外
-                // $validation->add($param, new ExclusionIn(array(
-                //     'domain' => $ruleValue,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'valueis':     // 等于固定值
-                // $validation->add($param, new Identical(array(
-                //     'value' => $ruleValue,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'equalTo': // 匹配另一参数
-                // $validation->add($param, new Confirmation(array(
-                //     'with' => $ruleValue,
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'expect': //
-                // $validation->add($param, new Email(array(
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'nums': // 选中个数校验
-                // $validation->add($param, new \Admin\Utils\MyValidator\NumsValidator(array(
-                //     'min' => min($ruleValue),   // 最少选中个数
-                //     'max' => max($ruleValue),   // 最多选中个数
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'filetype': // 文件类型合法性校验
-                // $validation->add($param, new \Admin\Utils\MyValidator\FileTypeValidator(array(
-                //     'filetype' => $ruleValue,   // 合法文件类型
-                //     'message' => $ruleMsg,
-                //     'code' => $errorCode
-                // )));
-                // break;
-
-            case 'sanitize':    // 自定义处理规则（转义过滤等）
-                    $this->sanitize[$param] = $ruleValue;
+            // 匹配另一参数
+            case 'equalTo':
+                $result = $datas[$param] == $datas[$ruleValue];
+            // 最小长度
+            // case 'minStr':
+            //     $result = $datas[$param] == $datas[$ruleValue];
+            //     break;
+            // // 最大长度
+            // case 'maxStr': 
+            //     $result = $datas[$param] == $datas[$ruleValue];
+            //     break;
+            // 是否是一个有效日期
+            case 'date':
+                $result = false !== strtotime($datas[$param]);
+                break;
+            // 只允许字母
+            case 'en':
+                $result = $this->regex($datas[$param], '/^[A-Za-z]+$/');
+                break;
+            case 'alphaNum':
+                // 只允许字母和数字
+                $result = $this->regex($datas[$param], '/^[A-Za-z0-9]+$/');
+                break;
+            case 'alphaDash':
+                // 只允许字母、数字和下划线 破折号
+                $result = $this->regex($datas[$param], '/^[A-Za-z0-9\-\_]+$/');
+                break;
+            case 'zh':
+                // 只允许汉字
+                $result = $this->regex($datas[$param], '/^[\x{4e00}-\x{9fa5}]+$/u');
+                break;
+            case 'chsAlpha':
+                // 只允许汉字、字母
+                $result = $this->regex($datas[$param], '/^[\x{4e00}-\x{9fa5}a-zA-Z]+$/u');
+                break;
+            case 'chsAlphaNum':
+                // 只允许汉字、字母和数字
+                $result = $this->regex($datas[$param], '/^[\x{4e00}-\x{9fa5}a-zA-Z0-9]+$/u');
+                break;
+            case 'chsDash':
+                // 只允许汉字、字母、数字和下划线_及破折号-
+                $result = $this->regex($datas[$param], '/^[\x{4e00}-\x{9fa5}a-zA-Z0-9\_\-]+$/u');
+                break;
+            case 'mobile':
+                $result = $this->regex($datas[$param], '/^1[345789]\d{9}$/');
+                break;
+            case 'idNo':
+                $result = $this->regex($datas[$param], '/^([\d]{17}[xX\d]|[\d]{15})$/');
+                break;
+            case 'activeUrl':
+                // 是否为有效的网址
+                $result = checkdnsrr($datas[$param]);
+                break;
+            case 'ip':
+                // 是否为IP地址
+                $result = $this->filter($datas[$param], [FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6]);
+                break;
+            case 'url':
+                // 是否为一个URL地址
+                $result = $this->filter($datas[$param], FILTER_VALIDATE_URL);
+                break;
+            case 'float':
+                // 是否为float
+                $result = $this->filter($datas[$param], FILTER_VALIDATE_FLOAT);
+                break;
+            case 'int':
+                $result = is_numeric($datas[$param]);
+                break;
+            case 'integer':
+                // 是否为整型
+                $result = $this->filter($datas[$param], FILTER_VALIDATE_INT);
+                break;
+            case 'email':
+                // 是否为邮箱地址
+                $result = $this->filter($datas[$param], FILTER_VALIDATE_EMAIL);
+                break;
+            case 'boolean':
+                // 是否为布尔值
+                $result = in_array($datas[$param], [true, false, 0, 1, '0', '1'], true);
+                break;
+            case 'array':
+                // 是否为数组
+                $result = is_array($datas[$param]);
+                break;
+            case 'file':
+                $result = $datas[$param] instanceof File;
                 break;
             }
+            return  $result;
     }
 
     /**
-     * 校验错误码
-     * @param  $field
-     * @return [int]
+     * 使用filter_var方式验证
+     * @access protected
+     * @param mixed     $value  字段值
+     * @param mixed     $rule  验证规则
+     * @return bool
      */
-    private function _errorCode($field)
+    protected function filter($value, $rule)
     {
-        $error = array(
-            'required' => 1001,
-            'length' => 1002,
-            'regex' => 1003,
-            'between' => 1004,
-            'range' => 1005,
-            'rangeout' => 1006,
-            'valueis' => 1007,
-            'equalTo' => 1008,
-            'expect' => 1009,
-            'nums' => 1010,
-            'filetype' => 1011
-        );
-        return isset($error[$field]) ? $error[$field] : 0;
-    }
-
-    /**
-     * [_warnFormat 格式化错误输出]
-     * @return [array] [description]
-     */
-    private function _warnFormat($msgObj, $type='both')
-    {
-        $msgArr = array();
-        foreach ($msgObj as  $val)
-        {
-            $field = $val->getField();
-            if(isset($msgArr[$field]))
-            {
-                continue;
-            }
-            if(empty($msgArr[$field]))
-            {
-                switch ($type) {
-                    case 'code':
-                            $msgArr[$field]['code'] = '';
-                            // $msgArr[$field]['code'] = $val->getCode();
-                    break;
-
-                    case 'msg':
-                            $msgArr[$field]['msg'] = $val->getMessage();
-                    break;
-
-                    case 'both':
-                    default:
-                            $msgArr[$field]['msg'] = $val->getMessage();
-                            $msgArr[$field]['code'] = '';
-                            // $msgArr[$field]['code'] = $val->getCode();
-                    break;
-                }
-            }
+        if (is_string($rule) && strpos($rule, ',')) {
+            list($rule, $param) = explode(',', $rule);
+        } elseif (is_array($rule)) {
+            $param = isset($rule[1]) ? $rule[1] : null;
+            $rule  = $rule[0];
+        } else {
+            $param = null;
         }
-        return $msgArr;
+        return false !== filter_var($value, is_int($rule) ? $rule : filter_id($rule), $param);
+    }
+
+    /**
+     * 使用正则验证数据
+     * @access protected
+     * @param mixed     $value  字段值
+     * @param mixed     $rule  验证规则 正则规则或者预定义正则名
+     * @return mixed
+     */
+    protected function regex($value, $rule)
+    {
+        if (isset($this->regex[$rule])) {
+            $rule = $this->regex[$rule];
+        }
+        if (0 !== strpos($rule, '/') && !preg_match('/\/[imsU]{0,4}$/', $rule)) {
+            // 不是正则表达式则两端补上/
+            $rule = '/^' . $rule . '$/';
+        }
+        return 1 === preg_match($rule, (string) $value);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
-Class Helper {
-	public static $count = 1;
+Class Helper 
+{
 	public function resRet($data = [], $code = 200)
 	{
 		$ret = ['code' => $code];
@@ -11,10 +11,6 @@ Class Helper {
 			$ret['data'] = $data;
 
 		echo json_encode($ret);
-		return false;
-	}
-
-	public function test(){
-		echo ++$this->count;
+		exit;
 	}
 }

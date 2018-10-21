@@ -1,5 +1,6 @@
 <?php
 
+require APP_PATH . DIRECTORY_SEPARATOR .'/components/vendor/autoload.php';
 define("APP_PATH",  realpath(dirname(__FILE__) . '/../../')); 
 $app  = new Yaf\Application(APP_PATH . "/conf/application.ini");
 $class = $action = '';
@@ -15,12 +16,13 @@ foreach($argv as $k => $arg) {
 }
 
 
+$dispatcher->getInstance()->disableView();
 $config = \Yaf\Application::app()->getConfig();
 require APP_PATH."../library/Loader.php";
 spl_autoload_register('loader');
 
-\Yaf\Registry::set('db', PdoMysql::getInstance($config["db"]));
-\Yaf\Registry::set('redis', RedisDb::getInstance($config["redis"]));
-
+$container = new Illuminate\Container\Container();
+\Yaf\Registry::set('di', $container); 
+require APP_PATH."/library/container.php";
 $app->execute([$class, $action], $params);
 

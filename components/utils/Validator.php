@@ -9,7 +9,7 @@ class Validate
     /**
      * 获取单例
      */
-    public static function getInstance($dbConf, $key = 'default')
+    public static function getInstance($key = 'default')
 	{
 		if(isset(self::$instance[$key]) && self::$instance[$key] !== null)
 		{
@@ -115,7 +115,7 @@ class Validate
      * @param array     $data  验证数据
      * @return bool
      */
-    protected function is($value, $rule, $data = [])
+    protected function __construct($value, $rule, $data = [])
     {
         switch ($rule) {
             case 'require':
